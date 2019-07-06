@@ -22,7 +22,7 @@ impl Color {
     }
 
     pub fn sky() -> &'static Color {
-        &Color { r: 0.53, g: 0.81, b: 0.98 }
+        &Color { r: 0.0, g: 0.0, b: 0.0 }
     }
 }
 
@@ -66,7 +66,7 @@ impl Mul<Color> for f32 {
     type Output = Color;
 
     fn mul(self, c: Color) -> Color {
-        self * c
+        c * self
     }
 }
 

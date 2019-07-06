@@ -1,5 +1,5 @@
-use crate::vector::{Vec2, Vec3};
-use crate::scene::{Solid, Viewport};
+use crate::vector::{Vec3};
+use crate::scene::Viewport;
 
 pub struct Ray {
     pub origin: Vec3,
