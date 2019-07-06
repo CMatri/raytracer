@@ -3,6 +3,7 @@ use crate::vector::{Vec3};
 use crate::color::Color;
 use crate::geom::{Solid};
 use crate::light::{PointLight, DirectionalLight, Light};
+use rayon::prelude::*;
 
 pub struct Hit<'a> {
     pub dist: f64,
@@ -60,50 +61,22 @@ pub struct Viewport {
 }
 
 impl Viewport {
-    pub fn render(&mut self, buffer: &mut Vec<u32>, t: f32) {
+    pub fn render(&mut self, t: f32) -> Vec<u32> {
         (self.scene.update_func)(&mut self.scene.objects, t);
         
-        /*crossbeam::scope(|scope| { // ugh, just completely rewrite this multithreading attempt
-            let nthreads = self.height;
-            let mut threads = vec![];
-            for t in 0..nthreads {
-                let y = Arc::new(t);
-                let width = Arc::new(&self.width);
-                let scene = Arc::new(Mutex::new(&self.scene));
-                let s = Arc::new(Mutex::new(&self));
-                let final_buf = Arc::new(Mutex::new(Vec::new()));
-
-                threads.push(scope.spawn(move |_| {
-                    let thread_y = y.clone();
-                    let thread_buf = final_buf.clone();
-
-                    let mut buf = vec![];
-                    for x in 0..**width {
-                        let i = x;//x + y * self.width;
-                        let ray = Ray::new(x, *y, &s.lock().unwrap());
-                        let color = if let Some(hit) = scene.lock().unwrap().trace(&ray) {
-                            scene.lock().unwrap().trace_color(&ray, &hit)
-                        } else {
-                            *Color::sky()
-                        };
-                        buf.push(((color.r * 255.0) as u32) << 16 | ((color.g * 255.0) as u32) << 8 | ((color.b * 255.0) as u32));
-                    }
-
-                    final_buf.lock().unwrap().append(&mut buf);
-                }));
-            }
-        });*/
-        for x in 0..self.width {
-            for y in 0..self.height {
-                let i = x + y * self.width;
-                let ray = Ray::new(x, y, &self);
-                let color = if let Some(hit) = self.scene.trace(&ray) {
-                    self.scene.trace_color(&ray, &hit)
-                } else {
-                    *Color::sky()
-                };
-                buffer[i as usize] = ((color.r * 255.0) as u32) << 16 | ((color.g * 255.0) as u32) << 8 | ((color.b * 255.0) as u32);
-            }
-        }
+        let buf: Vec<u32> = (0..self.width * self.height).collect();
+        buf.par_iter().map(|index| {
+            let i = *index;
+            let y = (i as f32 / self.width as f32) as u32;
+            let x = (i as f32 % self.width as f32) as u32;
+            let ray = Ray::new(x, y, &self);
+            let color = if let Some(hit) = self.scene.trace(&ray) {
+                self.scene.trace_color(&ray, &hit)
+            } else {
+                *Color::sky()
+            };
+            //(((i as f32) / ((self.width * self.height) as f32)) * 255.0) as u32
+            ((color.r * 255.0) as u32) << 16 | ((color.g * 255.0) as u32) << 8 | ((color.b * 255.0) as u32)
+        }).collect()
     }
 }

@@ -19,7 +19,6 @@ const WIDTH: usize = 640;
 const HEIGHT: usize = 360;
 
 fn main() {
-    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
     let mut window = Window::new("Raytracer - ESC to exit",
                                  WIDTH,
                                  HEIGHT,
@@ -105,7 +104,7 @@ fn main() {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         frames += 1;
         t += if t < std::f32::consts::PI * 2.0 { 0.01 } else { -t };
-        viewport.render(&mut buffer, t);
+        let buffer = viewport.render(t);
         window.update_with_buffer(&buffer).unwrap();
         
         if t0.elapsed().unwrap() >= one_sec {
