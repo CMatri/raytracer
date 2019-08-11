@@ -97,20 +97,25 @@ fn main() {
     };
 
     let mut t: f32 = 0.0;
-    let mut t0 = SystemTime::now();
+    let mut timer = SystemTime::now();
+    let mut ticker = SystemTime::now();
     let mut frames = 0;
     let one_sec = Duration::from_secs(1);
+    let one_tick = Duration::from_millis(16); // render once every 16 millis, approximately 60 fps
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        frames += 1;
-        t += if t < std::f32::consts::PI * 2.0 { 0.01 } else { -t };
-        let buffer = viewport.render(t);
-        window.update_with_buffer(&buffer).unwrap();
-        
-        if t0.elapsed().unwrap() >= one_sec {
+    while window.is_open() && !window.is_key_down(Key::Escape) {        
+        if ticker.elapsed().unwrap() >= one_tick {
+            frames += 1;
+            t += if t < std::f32::consts::PI * 2.0 { 0.01 } else { -t };
+            ticker = SystemTime::now();
+            let buffer = viewport.render(t);
+            window.update_with_buffer(&buffer).unwrap();
+        }
+
+        if timer.elapsed().unwrap() >= one_sec {
             println!("{:?} fps", frames);
             frames = 0;
-            t0 = SystemTime::now();
+            timer = SystemTime::now();
         }
     }
 }
